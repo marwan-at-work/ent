@@ -7,8 +7,6 @@
 package pet
 
 import (
-	"strconv"
-
 	"github.com/facebookincubator/ent/dialect/sql"
 	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
 	"github.com/facebookincubator/ent/entc/integration/ent/predicate"
@@ -18,7 +16,6 @@ import (
 func ID(id string) predicate.Pet {
 	return predicate.Pet(
 		func(s *sql.Selector) {
-			id, _ := strconv.Atoi(id)
 			s.Where(sql.EQ(s.C(FieldID), id))
 		},
 	)
@@ -27,7 +24,6 @@ func ID(id string) predicate.Pet {
 // IDEQ applies the EQ predicate on the ID field.
 func IDEQ(id string) predicate.Pet {
 	return predicate.Pet(func(s *sql.Selector) {
-		id, _ := strconv.Atoi(id)
 		s.Where(sql.EQ(s.C(FieldID), id))
 	},
 	)
@@ -36,7 +32,6 @@ func IDEQ(id string) predicate.Pet {
 // IDNEQ applies the NEQ predicate on the ID field.
 func IDNEQ(id string) predicate.Pet {
 	return predicate.Pet(func(s *sql.Selector) {
-		id, _ := strconv.Atoi(id)
 		s.Where(sql.NEQ(s.C(FieldID), id))
 	},
 	)
@@ -53,7 +48,7 @@ func IDIn(ids ...string) predicate.Pet {
 		}
 		v := make([]interface{}, len(ids))
 		for i := range v {
-			v[i], _ = strconv.Atoi(ids[i])
+			v[i] = ids[i]
 		}
 		s.Where(sql.In(s.C(FieldID), v...))
 	},
@@ -71,7 +66,7 @@ func IDNotIn(ids ...string) predicate.Pet {
 		}
 		v := make([]interface{}, len(ids))
 		for i := range v {
-			v[i], _ = strconv.Atoi(ids[i])
+			v[i] = ids[i]
 		}
 		s.Where(sql.NotIn(s.C(FieldID), v...))
 	},
@@ -81,7 +76,6 @@ func IDNotIn(ids ...string) predicate.Pet {
 // IDGT applies the GT predicate on the ID field.
 func IDGT(id string) predicate.Pet {
 	return predicate.Pet(func(s *sql.Selector) {
-		id, _ := strconv.Atoi(id)
 		s.Where(sql.GT(s.C(FieldID), id))
 	},
 	)
@@ -90,7 +84,6 @@ func IDGT(id string) predicate.Pet {
 // IDGTE applies the GTE predicate on the ID field.
 func IDGTE(id string) predicate.Pet {
 	return predicate.Pet(func(s *sql.Selector) {
-		id, _ := strconv.Atoi(id)
 		s.Where(sql.GTE(s.C(FieldID), id))
 	},
 	)
@@ -99,7 +92,6 @@ func IDGTE(id string) predicate.Pet {
 // IDLT applies the LT predicate on the ID field.
 func IDLT(id string) predicate.Pet {
 	return predicate.Pet(func(s *sql.Selector) {
-		id, _ := strconv.Atoi(id)
 		s.Where(sql.LT(s.C(FieldID), id))
 	},
 	)
@@ -108,7 +100,6 @@ func IDLT(id string) predicate.Pet {
 // IDLTE applies the LTE predicate on the ID field.
 func IDLTE(id string) predicate.Pet {
 	return predicate.Pet(func(s *sql.Selector) {
-		id, _ := strconv.Atoi(id)
 		s.Where(sql.LTE(s.C(FieldID), id))
 	},
 	)
