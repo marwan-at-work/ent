@@ -109,7 +109,7 @@ func plural(name string) string {
 }
 
 func isSeparator(r rune) bool {
-	return r == '_' || r == '-'
+	return r == '_' || r == '-' || r == '.'
 }
 
 func pascalWords(words []string) string {

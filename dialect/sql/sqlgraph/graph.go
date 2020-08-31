@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strings"
 
 	"github.com/facebook/ent/dialect"
 	"github.com/facebook/ent/dialect/sql"
@@ -524,6 +525,7 @@ func QueryEdges(ctx context.Context, drv dialect.Driver, spec *EdgeQuerySpec) er
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
+	query = strings.ReplaceAll(query, "`", "")
 	if err := drv.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
@@ -548,6 +550,7 @@ type query struct {
 func (q *query) nodes(ctx context.Context, drv dialect.Driver) error {
 	rows := &sql.Rows{}
 	query, args := q.selector().Query()
+	query = strings.ReplaceAll(query, "`", "")
 	if err := drv.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
@@ -861,6 +864,7 @@ func (c *creator) insert(ctx context.Context, tx dialect.ExecQuerier, insert *sq
 	if c.ID.Value != nil {
 		insert.Set(c.ID.Column, c.ID.Value)
 		query, args := insert.Query()
+		query = strings.ReplaceAll(query, "`", "")
 		return tx.Exec(ctx, query, args, &res)
 	}
 	id, err := insertLastID(ctx, tx, insert.Returning(c.ID.Column))
@@ -975,6 +979,7 @@ func (g *graph) addM2MEdges(ctx context.Context, ids []driver.Value, edges EdgeS
 			}
 		}
 		query, args := insert.Query()
+		query = strings.ReplaceAll(query, "`", "")
 		if err := g.tx.Exec(ctx, query, args, &res); err != nil {
 			return fmt.Errorf("add m2m edge for table %s: %v", table, err)
 		}
@@ -1110,6 +1115,7 @@ func setTableColumns(fields []*FieldSpec, edges map[Rel][]*EdgeSpec, set func(st
 // insertLastID invokes the insert query on the transaction and returns the LastInsertID.
 func insertLastID(ctx context.Context, tx dialect.ExecQuerier, insert *sql.InsertBuilder) (int64, error) {
 	query, args := insert.Query()
+	query = strings.ReplaceAll(query, "`", "")
 	// PostgreSQL does not support the LastInsertId() method of sql.Result
 	// on Exec, and should be extracted manually using the `RETURNING` clause.
 	if insert.Dialect() == dialect.Postgres {
@@ -1131,6 +1137,7 @@ func insertLastID(ctx context.Context, tx dialect.ExecQuerier, insert *sql.Inser
 // insertLastIDs invokes the batch insert query on the transaction and returns the LastInsertID of all entities.
 func insertLastIDs(ctx context.Context, tx dialect.ExecQuerier, insert *sql.InsertBuilder) (ids []int64, err error) {
 	query, args := insert.Query()
+	query = strings.ReplaceAll(query, "`", "")
 	// PostgreSQL does not support the LastInsertId() method of sql.Result
 	// on Exec, and should be extracted manually using the `RETURNING` clause.
 	if insert.Dialect() == dialect.Postgres {
