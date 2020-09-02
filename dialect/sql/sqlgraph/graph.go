@@ -576,6 +576,7 @@ func (q *query) count(ctx context.Context, drv dialect.Driver) (int, error) {
 		selector.Count(sql.Distinct(selector.C(q.Node.ID.Column)))
 	}
 	query, args := selector.Query()
+	query = strings.ReplaceAll(query, "`", "")
 	if err := drv.Query(ctx, query, args, rows); err != nil {
 		return 0, err
 	}
@@ -629,6 +630,7 @@ func (u *updater) node(ctx context.Context, tx dialect.ExecQuerier) error {
 	if !update.Empty() {
 		var res sql.Result
 		query, args := update.Query()
+		query = strings.ReplaceAll(query, "`", "")
 		if err := tx.Exec(ctx, query, args, &res); err != nil {
 			return err
 		}
@@ -641,6 +643,7 @@ func (u *updater) node(ctx context.Context, tx dialect.ExecQuerier) error {
 		Where(sql.EQ(u.Node.ID.Column, u.Node.ID.Value))
 	rows := &sql.Rows{}
 	query, args := selector.Query()
+	query = strings.ReplaceAll(query, "`", "")
 	if err := tx.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
@@ -659,6 +662,7 @@ func (u *updater) nodes(ctx context.Context, tx dialect.ExecQuerier) (int, error
 		pred(selector)
 	}
 	query, args := selector.Query()
+	query = strings.ReplaceAll(query, "`", "")
 	rows := &sql.Rows{}
 	if err := u.tx.Query(ctx, query, args, rows); err != nil {
 		return 0, fmt.Errorf("querying table %s: %v", u.Node.Table, err)
@@ -680,6 +684,7 @@ func (u *updater) nodes(ctx context.Context, tx dialect.ExecQuerier) (int, error
 	if !update.Empty() {
 		var res sql.Result
 		query, args := update.Query()
+		query = strings.ReplaceAll(query, "`", "")
 		if err := tx.Exec(ctx, query, args, &res); err != nil {
 			return 0, err
 		}
