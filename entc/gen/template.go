@@ -162,6 +162,10 @@ var (
 				return !g.featureEnabled(FeatureSnapshot)
 			},
 		},
+		{
+			Name:   "dbschema",
+			Format: "dbschema/dbschema.go",
+		},
 	}
 	// templates holds the Go templates for the code generation.
 	templates *Template

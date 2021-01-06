@@ -17,6 +17,7 @@ func ({{ $receiver }} *{{ $builder }}) sqlSave(ctx context.Context) ({{ $ret }} 
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table: {{ $.Package }}.Table,
+			Schema: {{ $receiver }}.dbSchema.{{ $.Name }}Schema,
 			Columns: {{ $.Package }}.Columns,
 			ID: &sqlgraph.FieldSpec{
 				Type: field.{{ $.ID.Type.ConstName }},
@@ -34,7 +35,7 @@ func ({{ $receiver }} *{{ $builder }}) sqlSave(ctx context.Context) ({{ $ret }} 
 		if ps := {{ $mutation }}.predicates; len(ps) > 0 {
 			_spec.Predicate = func(selector *sql.Selector) {
 				for i := range ps {
-					ps[i](selector)
+					ps[i](selector, {{ $receiver }}.dbSchema)
 				}
 			}
 		}

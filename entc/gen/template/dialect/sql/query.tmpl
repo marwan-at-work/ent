@@ -87,6 +87,7 @@ func ({{ $receiver }} *{{ $builder }}) querySpec() *sqlgraph.QuerySpec {
 	_spec := &sqlgraph.QuerySpec{
 		Node: &sqlgraph.NodeSpec{
 			Table: {{ $.Package }}.Table,
+			Schema: {{ $receiver }}.dbSchema.{{ $.Name }}Schema,
 			Columns: {{ $.Package }}.Columns,
 			ID: &sqlgraph.FieldSpec{
 				Type: field.{{ $.ID.Type.ConstName }},
@@ -108,7 +109,7 @@ func ({{ $receiver }} *{{ $builder }}) querySpec() *sqlgraph.QuerySpec {
 	if ps := {{ $receiver }}.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
-				ps[i](selector)
+				ps[i](selector, {{ $receiver }}.dbSchema)
 			}
 		}
 	}
@@ -137,7 +138,7 @@ func ({{ $receiver }} *{{ $builder }}) sqlQuery() *sql.Selector {
 		selector.Select(selector.Columns({{ $.Package }}.Columns...)...)
 	}
 	for _, p := range {{ $receiver }}.predicates {
-		p(selector)
+		p(selector, {{ $receiver }}.dbSchema)
 	}
 	for _, p := range {{ $receiver }}.order {
 		p(selector, {{ $.Package }}.ValidColumn)
@@ -167,6 +168,7 @@ func ({{ $receiver }} *{{ $builder }}) sqlQuery() *sql.Selector {
 	step := sqlgraph.NewStep(
 		sqlgraph.From({{ $n.Package }}.Table, {{ $n.Package }}.{{ $n.ID.Constant }}, selector),
 		sqlgraph.To({{ $e.Type.Package }}.Table, {{ $e.Type.Package }}.{{ $e.Type.ID.Constant }}),
+		sqlgraph.ToSchema({{ $receiver }}.dbSchema.{{ $e.Type.Name }}Schema),
 		sqlgraph.Edge(sqlgraph.{{ $e.Rel.Type }}, {{ $e.IsInverse }}, {{ $n.Package }}.{{ $e.TableConstant }},
 			{{- if $e.M2M -}}
 				{{ $n.Package }}.{{ $e.PKConstant }}...
@@ -174,6 +176,7 @@ func ({{ $receiver }} *{{ $builder }}) sqlQuery() *sql.Selector {
 				{{ $n.Package }}.{{ $e.ColumnConstant }}
 			{{- end -}}
 		),
+		{{/* TODO: allow user to customize db destination of a join table */}}
 	)
 	{{ $ident }} = sqlgraph.SetNeighbors({{ $receiver }}.driver.Dialect(), step)
 {{ end }}
@@ -188,6 +191,7 @@ func ({{ $receiver }} *{{ $builder }}) sqlQuery() *sql.Selector {
 	step := sqlgraph.NewStep(
 		sqlgraph.From({{ $n.Package }}.Table, {{ $n.Package }}.{{ $n.ID.Constant }}, id),
 		sqlgraph.To({{ $e.Type.Package }}.Table, {{ $e.Type.Package }}.{{ $e.Type.ID.Constant }}),
+		sqlgraph.ToSchema({{ $receiver }}.dbSchema.{{ $e.Type.Name }}Schema),
 		sqlgraph.Edge(sqlgraph.{{ $e.Rel.Type }}, {{ $e.IsInverse }}, {{ $n.Package }}.{{ $e.TableConstant }},
 			{{- if $e.M2M -}}
 				{{ $n.Package }}.{{ $e.PKConstant }}...
@@ -300,7 +304,7 @@ func ({{ $receiver }} *{{ $builder }}) sqlQuery() *sql.Selector {
 				{{- end }}
 			}
 			query.withFKs = true
-			query.Where(predicate.{{ $e.Type.Name }}(func(s *sql.Selector) {
+			query.Where(predicate.{{ $e.Type.Name }}(func(s *sql.Selector, dbs dbschema.Schema) {
 				s.Where(sql.InValues({{ $.Package }}.{{ $e.ColumnConstant }}, fks...))
 			}))
 			neighbors, err := query.All(ctx)

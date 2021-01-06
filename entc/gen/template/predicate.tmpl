@@ -15,10 +15,11 @@ import (
 
 	"github.com/facebook/ent/dialect/gremlin/graph/dsl"
 	"github.com/facebook/ent/dialect/sql"
+	"{{ $.Config.Package }}/dbschema"
 )
 
 {{ range $_, $n := $.Nodes -}}
 	// {{ $n.Name }} is the predicate function for {{ $n.Package }} builders.
-	type {{ $n.Name }} func({{ $.Storage.Builder }})
+	type {{ $n.Name }} func({{ $.Storage.Builder }}, dbschema.Schema)
 {{ end }}
 {{ end }}
