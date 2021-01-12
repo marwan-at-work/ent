@@ -5,7 +5,7 @@ in the LICENSE file in the root directory of this source tree.
 */}}
 
 {{ define "dialect/sql/predicate/id" -}}
-	func(s *sql.Selector) {
+	func(s *sql.Selector, dbs dbschema.Schema) {
 		s.Where(sql.EQ(s.C({{ $.ID.Constant }}), id))
 	}
 {{- end }}
@@ -14,7 +14,7 @@ in the LICENSE file in the root directory of this source tree.
 	{{- $op := $.Scope.Op -}}
 	{{- $arg := $.Scope.Arg -}}
 	{{- $storage := $.Scope.Storage -}}
-	func(s *sql.Selector) {
+	func(s *sql.Selector, dbs dbschema.Schema) {
 		{{- if $op.Variadic }}
 			// if not arguments were provided, append the FALSE constants,
 			// since we can't apply "IN ()". This will make this predicate falsy.
@@ -34,7 +34,7 @@ in the LICENSE file in the root directory of this source tree.
 {{ define "dialect/sql/predicate/field" -}}
 	{{- $f := $.Scope.Field -}}
 	{{- $arg := $.Scope.Arg -}}
-	func(s *sql.Selector) {
+	func(s *sql.Selector, dbs dbschema.Schema) {
 		s.Where(sql.EQ(s.C({{ $f.Constant }}), {{ $arg }}))
 	}
 {{- end }}
@@ -44,7 +44,7 @@ in the LICENSE file in the root directory of this source tree.
 	{{- $op := $.Scope.Op -}}
 	{{- $arg := $.Scope.Arg -}}
 	{{- $storage := $.Scope.Storage -}}
-	func(s *sql.Selector) {
+	func(s *sql.Selector, dbs dbschema.Schema) {
 		{{- if $op.Variadic }}
 			// if not arguments were provided, append the FALSE constants,
 			// since we can't apply "IN ()". This will make this predicate falsy.
@@ -60,7 +60,7 @@ in the LICENSE file in the root directory of this source tree.
 {{ define "dialect/sql/predicate/edge/has" -}}
 	{{- $e := $.Scope.Edge -}}
 	{{- $refid := $.ID.Constant }}{{ if ne $e.Type.ID.StorageKey $.ID.StorageKey }}{{ $refid = print $e.Type.Name "FieldID" }}{{ end -}}
-	func(s *sql.Selector) {
+	func(s *sql.Selector, dbs dbschema.Schema) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, {{ $.ID.Constant }}),
 			sqlgraph.To({{ $e.TableConstant }}, {{ $refid }}),
@@ -72,6 +72,7 @@ in the LICENSE file in the root directory of this source tree.
 				{{- end -}}
 			),
 		)
+		sqlgraph.To.Schema = dbs.{{ $e.Type.Name }}
 		sqlgraph.HasNeighbors(s, step)
 	}
 {{- end }}
@@ -79,7 +80,7 @@ in the LICENSE file in the root directory of this source tree.
 {{ define "dialect/sql/predicate/edge/haswith" -}}
 	{{- $e := $.Scope.Edge -}}
 	{{- $refid := $.ID.Constant }}{{ if ne $e.Type.ID.StorageKey $.ID.StorageKey }}{{ $refid = print $e.Type.Name "FieldID" }}{{ end -}}
-	func(s *sql.Selector) {
+	func(s *sql.Selector, dbs dbschema.Schema) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, {{ $.ID.Constant }}),
 			sqlgraph.To({{ if ne $.Table $e.Type.Table }}{{ $e.InverseTableConstant }}{{ else }}Table{{ end }}, {{ $refid }}),
@@ -91,39 +92,40 @@ in the LICENSE file in the root directory of this source tree.
 				{{- end -}}
 			),
 		)
+		sqlgraph.To.Schema = dbs.{{ $e.Type.Name }}
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
-				p(s)
+				p(s, dbs)
 			}
 		})
 	}
 {{- end }}
 
 {{ define "dialect/sql/predicate/and" -}}
-	func(s *sql.Selector) {
+	func(s *sql.Selector, dbs dbschema.Schema) {
 		s1 := s.Clone().SetP(nil)
 		for _, p := range predicates {
-			p(s1)
+			p(s1, dbs)
 		}
 		s.Where(s1.P())
 	}
 {{- end }}
 
 {{ define "dialect/sql/predicate/or" -}}
-	func(s *sql.Selector) {
+	func(s *sql.Selector, dbs dbschema.Schema) {
 		s1 := s.Clone().SetP(nil)
 		for i, p := range predicates {
 			if i > 0 {
 				s1.Or()
 			}
-			p(s1)
+			p(s1, dbs)
 		}
 		s.Where(s1.P())
 	}
 {{- end }}
 
 {{ define "dialect/sql/predicate/not" -}}
-	func(s *sql.Selector) {
-		p(s.Not())
+	func(s *sql.Selector, dbs dbschema.Schema) {
+		p(s.Not(), dbs)
 	}
 {{- end }}
